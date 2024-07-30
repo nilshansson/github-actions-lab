@@ -22,4 +22,4 @@ jobs:
         run: 'gcloud config set run/region us-central1'
 
       - name: 'Run paymentapp'
-        run: 'gcloud run deploy paymentapp --source .'
+        run: 'gcloud run deploy paymentapp --source . --allow-unauthenticated'
