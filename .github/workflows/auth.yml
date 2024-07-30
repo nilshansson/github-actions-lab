@@ -19,7 +19,7 @@ jobs:
         run: 'gcloud info'
 
       - name: 'Set region for Cloud Run'
-        run: 'gcloud config set run/region europe-north1'
+        run: 'gcloud config set run/region us-central1'
 
       - name: 'Run paymentapp'
-        run: 'gcloud run deploy paymentapp --source . --region europe-north1'
+        run: 'gcloud run deploy paymentapp --source .'
