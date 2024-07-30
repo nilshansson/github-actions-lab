@@ -17,3 +17,6 @@ jobs:
 
       - name: 'Use gcloud CLI'
         run: 'gcloud info'
+
+      - name: 'Run paymentapp'
+        run: 'gcloud run deploy SERVICE --source .'
