@@ -19,4 +19,4 @@ jobs:
         run: 'gcloud info'
 
       - name: 'Run paymentapp'
-        run: 'gcloud run deploy paymentapp --source .'
+        run: 'gcloud run deploy paymentapp --source . --region europe-north1'
