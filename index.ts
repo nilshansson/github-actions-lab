@@ -38,11 +38,17 @@ app.post("/payments", async (req: Request, res: Response) => {
     .values({ carId: carId, amount: amount })
     .returning();
   logger.info({ message: "New order", newOrder });
+  if (!newOrder) {
+    throw new Error("no order error");
+  }
   const newOutbox = await db
     .insert(outboxTable)
     .values({ data: JSON.stringify(newOrder) })
     .returning();
   logger.info({ message: "New outbox", newOutbox });
+  if (!newOutbox[0]) {
+    throw new Error("no outbox error");
+  }
   try {
     const response = await fetch(
       "https://warehouseapp-ynorbbawua-uc.a.run.app/car",
@@ -51,7 +57,7 @@ app.post("/payments", async (req: Request, res: Response) => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: newOutbox.data,
+        body: JSON.stringify(newOutbox[0].data),
       },
     );
 
@@ -60,7 +66,7 @@ app.post("/payments", async (req: Request, res: Response) => {
     }
 
     const result = await response.json();
-    await db.delete(outboxTable).where(eq(outboxTable.id, newOutbox.id));
+    await db.delete(outboxTable).where(eq(outboxTable.id, newOutbox[0].id));
     logger.info("Success:", result);
   } catch (error) {
     logger.error("Error:", error);
