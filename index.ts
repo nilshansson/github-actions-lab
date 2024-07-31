@@ -1,7 +1,7 @@
 import express, { Request, Response, NextFunction } from "express";
 import logger from "./logger";
 import { db, outboxTable, paymentTable } from "./drizzle";
-
+import { eq } from "drizzle-orm";
 const app = express();
 const router = express.Router();
 
@@ -37,15 +37,34 @@ app.post("/payments", async (req: Request, res: Response) => {
     .insert(paymentTable)
     .values({ carId: carId, amount: amount })
     .returning();
+  logger.info({ message: "New order", newOrder });
   const newOutbox = await db
     .insert(outboxTable)
-    .values({ data: JSON.stringify(newOrder) });
-  logger.info({
-    level: "info",
-    message: "Payment processed successfully",
-    carId,
-    amount,
-  });
+    .values({ data: JSON.stringify(newOrder) })
+    .returning();
+  logger.info({ message: "New outbox", newOutbox });
+  try {
+    const response = await fetch(
+      "https://warehouseapp-ynorbbawua-uc.a.run.app/car",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: newOutbox.data,
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    await db.delete(outboxTable).where(eq(outboxTable.id, newOutbox.id));
+    logger.info("Success:", result);
+  } catch (error) {
+    logger.error("Error:", error);
+  }
   res
     .status(201)
     .json({ message: "Payment processed successfully", carId, amount });
