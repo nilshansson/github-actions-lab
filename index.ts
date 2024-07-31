@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 const app = express();
 const router = express.Router();
 
-const port = 8081;
+const port = 8080;
 app.use(express.json());
 
 router.use((req: Request, res: Response, next: NextFunction) => {
