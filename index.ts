@@ -32,7 +32,7 @@ app.post("/payments", async (req: Request, res: Response) => {
       .status(400)
       .json({ error: "Invalid amount. It must be an integer." });
   }
-  await db.transaction(async (tx) => {
+  const newIds = await db.transaction(async (tx) => {
     const newOrder = await tx
       .insert(paymentTable)
       .values({ carId: carId, amount: amount })
@@ -53,14 +53,21 @@ app.post("/payments", async (req: Request, res: Response) => {
     if (!newOrder[0]) {
       throw new Error("no order error");
     }
-    try{ const response = await fetch(
+
+    const newCarId = newOrder[0].carId;
+    const newId = newOutbox[0].id;
+    return { newCarId, newId };
+  });
+
+  try {
+    const response = await fetch(
       "https://warehouseapp-ynorbbawua-uc.a.run.app/car",
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: newOrder[0].carId,
+        body: newIds.newCarId,
       },
     );
 
@@ -70,14 +77,13 @@ app.post("/payments", async (req: Request, res: Response) => {
     }
 
     if (response.status === 200) {
-      await db.delete(outboxTable).where(eq(outboxTable.id, newOutbox[0].id));
+      await db.delete(outboxTable).where(eq(outboxTable.id, newIds.newId));
       logger.info("Success:", response);
       res.status(200).send("Success");
     }
-    catch{
-      throw new Error("fetch failed")
-    }
-  });
+  } catch {
+    throw new Error("fetch failed");
+  }
 });
 
 app.use("/", router);
