@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 const app = express();
 const router = express.Router();
 
-const port = 8080;
+const port = 8081;
 app.use(express.json());
 
 router.use((req: Request, res: Response, next: NextFunction) => {
@@ -50,7 +50,9 @@ app.post("/payments", async (req: Request, res: Response) => {
     if (!newOutbox[0]) {
       throw new Error("no outbox error");
     }
-
+    if (!newOrder[0]) {
+      throw new Error("no order error");
+    }
     const response = await fetch(
       "https://warehouseapp-ynorbbawua-uc.a.run.app/car",
       {
@@ -58,8 +60,8 @@ app.post("/payments", async (req: Request, res: Response) => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(newOutbox[0].data),
-      }
+        body: newOrder[0].carId,
+      },
     );
 
     logger.info({ message: "warehouse response", response });
