@@ -77,27 +77,6 @@ app.post("/payments", async (req: Request, res: Response) => {
   });
 });
 
-// async function outboxChecker(id: number) {
-//   type OutboxType = typeof outboxTable.$inferSelect;
-
-//     try {
-//       const data: OutboxType = await db
-//       .select()
-//       .from(outboxTable)
-//       .where(eq(outboxTable.id, id));
-
-//       const response = await fetch(
-//         "https://warehouseapp-ynorbbawua-uc.a.run.app/car",
-//         {
-//           method: "POST",
-//           headers: {
-//             "Content-Type": "application/json",
-//           },
-//           body: JSON.stringify(newOutbox[0].data),
-//         }
-
-// }
-
 app.use("/", router);
 
 app.listen(port, () => {
