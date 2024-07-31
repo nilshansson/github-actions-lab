@@ -64,7 +64,7 @@ app.post("/payments", async (req: Request, res: Response) => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: newCarId,
+        body: JSON.parse(newCarId),
       },
     );
 
