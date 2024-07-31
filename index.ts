@@ -53,7 +53,6 @@ app.post("/payments", async (req: Request, res: Response) => {
     throw new Error("no order error");
   }
 
-  const newCarId = newOrder[0].carId;
   const newId = newOutbox[0].id;
 
   try {
@@ -64,7 +63,7 @@ app.post("/payments", async (req: Request, res: Response) => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.parse(newCarId),
+        body: JSON.stringify({ carId }),
       },
     );
 
