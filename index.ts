@@ -60,36 +60,23 @@ app.post("/payments", async (req: Request, res: Response) => {
         body: JSON.stringify(newOutbox[0].data),
       },
     );
-
-    logger.info({
-      message: "warehouse response status",
-      status: response.status,
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(
-        `HTTP error! status: ${response.status}, message: ${errorText}`,
-      );
+    logger.info({ message: "warehouse response", response });
+    if (response.status !== 200) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     const result = await response.json();
     logger.info({ message: "response json", result });
-
-    if (result) {
-      await db.delete(outboxTable).where(eq(outboxTable.id, newOutbox[0].id));
-      logger.info("Success:", result);
-      res
-        .status(201)
-        .json({ message: "Payment processed successfully", carId, amount });
-    } else {
-      throw new Error("Warehouse service failed to create car record");
-    }
+    await db.delete(outboxTable).where(eq(outboxTable.id, newOutbox[0].id));
+    logger.info("Success:", result);
   } catch (error) {
     logger.error("Error:", error);
-    res.status(500).json({ error: error });
   }
+  res
+    .status(201)
+    .json({ message: "Payment processed successfully", carId, amount });
 });
+
 app.use("/", router);
 
 app.listen(port, () => {
