@@ -76,7 +76,7 @@ app.post("/payments", async (req: Request, res: Response) => {
     const result = await response.json();
     logger.info({ message: "response json", result });
 
-    if (result.message) {
+    if (result) {
       await db.delete(outboxTable).where(eq(outboxTable.id, newOutbox[0].id));
       logger.info("Success:", result);
       res
@@ -87,7 +87,7 @@ app.post("/payments", async (req: Request, res: Response) => {
     }
   } catch (error) {
     logger.error("Error:", error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error });
   }
 });
 app.use("/", router);
