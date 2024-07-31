@@ -1,5 +1,6 @@
 import express, { Request, Response, NextFunction } from "express";
 import logger from "./logger";
+import { db, outboxTable, paymentTable } from "./drizzle";
 
 const app = express();
 const router = express.Router();
@@ -17,8 +18,9 @@ router.get("/status", (req: Request, res: Response) => {
   res.status(200).send();
 });
 
-app.post("/payments", (req: Request, res: Response) => {
+app.post("/payments", async (req: Request, res: Response) => {
   const { carId, amount } = req.body;
+
   logger.info({ message: "info", carId, amount });
   logger.warn({ message: "warning ", carId, amount });
   if (typeof amount !== "number" || !Number.isInteger(amount)) {
@@ -30,6 +32,14 @@ app.post("/payments", (req: Request, res: Response) => {
       .status(400)
       .json({ error: "Invalid amount. It must be an integer." });
   }
+
+  const newOrder = await db
+    .insert(paymentTable)
+    .values({ carId: carId, amount: amount })
+    .returning();
+  const newOutbox = await db
+    .insert(outboxTable)
+    .values({ data: JSON.stringify(newOrder) });
   logger.info({
     level: "info",
     message: "Payment processed successfully",

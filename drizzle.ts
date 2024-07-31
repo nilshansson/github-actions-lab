@@ -10,11 +10,12 @@ import {
 } from "drizzle-orm/pg-core";
 import { uuid } from "drizzle-orm/pg-core";
 import { jsonb } from "drizzle-orm/pg-core";
+import { integer } from "drizzle-orm/pg-core";
 export const db = drizzle(sql);
 export const paymentTable = pgTable("payment", {
   id: serial("id").primaryKey(),
   carId: uuid("carId").notNull(),
-  amount: numeric("amount").notNull(),
+  amount: integer("amount").notNull(),
 });
 
 export const outboxTable = pgTable("outbox", {
