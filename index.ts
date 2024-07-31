@@ -57,7 +57,7 @@ app.post("/payments", async (req: Request, res: Response) => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ carId: newOutbox[0].data.carId }),
+        body: JSON.stringify(newOutbox[0].data),
       },
     );
 
@@ -76,7 +76,7 @@ app.post("/payments", async (req: Request, res: Response) => {
     const result = await response.json();
     logger.info({ message: "response json", result });
 
-    if (result.message === "Car record created successfully") {
+    if (result.message) {
       await db.delete(outboxTable).where(eq(outboxTable.id, newOutbox[0].id));
       logger.info("Success:", result);
       res
@@ -90,7 +90,6 @@ app.post("/payments", async (req: Request, res: Response) => {
     res.status(500).json({ error: error.message });
   }
 });
-
 app.use("/", router);
 
 app.listen(port, () => {
