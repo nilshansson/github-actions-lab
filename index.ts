@@ -60,12 +60,13 @@ app.post("/payments", async (req: Request, res: Response) => {
         body: JSON.stringify(newOutbox[0].data),
       },
     );
-
+    logger.info({ message: "warehouse response", response });
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     const result = await response.json();
+    logger.info({ message: "response json", result });
     await db.delete(outboxTable).where(eq(outboxTable.id, newOutbox[0].id));
     logger.info("Success:", result);
   } catch (error) {
