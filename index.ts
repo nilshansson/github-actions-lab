@@ -32,24 +32,25 @@ app.post("/payments", async (req: Request, res: Response) => {
       .status(400)
       .json({ error: "Invalid amount. It must be an integer." });
   }
+  await db.transaction(async (tx) => {
+    const newOrder = await db
+      .insert(paymentTable)
+      .values({ carId: carId, amount: amount })
+      .returning();
+    logger.info({ message: "New order", newOrder });
+    if (!newOrder) {
+      throw new Error("no order error");
+    }
 
-  const newOrder = await db
-    .insert(paymentTable)
-    .values({ carId: carId, amount: amount })
-    .returning();
-  logger.info({ message: "New order", newOrder });
-  if (!newOrder) {
-    throw new Error("no order error");
-  }
-  const newOutbox = await db
-    .insert(outboxTable)
-    .values({ data: JSON.stringify(newOrder) })
-    .returning();
-  logger.info({ message: "New outbox", newOutbox });
-  if (!newOutbox[0]) {
-    throw new Error("no outbox error");
-  }
-  try {
+    const newOutbox = await db
+      .insert(outboxTable)
+      .values({ data: JSON.stringify(newOrder) })
+      .returning();
+    logger.info({ message: "New outbox", newOutbox });
+    if (!newOutbox[0]) {
+      throw new Error("no outbox error");
+    }
+
     const response = await fetch(
       "https://warehouseapp-ynorbbawua-uc.a.run.app/car",
       {
@@ -58,24 +59,42 @@ app.post("/payments", async (req: Request, res: Response) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(newOutbox[0].data),
-      },
+      }
     );
+
     logger.info({ message: "warehouse response", response });
     if (response.status !== 200) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const result = await response.json();
-    logger.info({ message: "response json", result });
-    await db.delete(outboxTable).where(eq(outboxTable.id, newOutbox[0].id));
-    logger.info("Success:", result);
-  } catch (error) {
-    logger.error("Error:", error);
-  }
-  res
-    .status(201)
-    .json({ message: "Payment processed successfully", carId, amount });
+    if (response.status === 200) {
+      await db.delete(outboxTable).where(eq(outboxTable.id, newOutbox[0].id));
+      logger.info("Success:", response);
+      res.status(200).send("Success");
+    }
+  });
 });
+
+// async function outboxChecker(id: number) {
+//   type OutboxType = typeof outboxTable.$inferSelect;
+
+//     try {
+//       const data: OutboxType = await db
+//       .select()
+//       .from(outboxTable)
+//       .where(eq(outboxTable.id, id));
+
+//       const response = await fetch(
+//         "https://warehouseapp-ynorbbawua-uc.a.run.app/car",
+//         {
+//           method: "POST",
+//           headers: {
+//             "Content-Type": "application/json",
+//           },
+//           body: JSON.stringify(newOutbox[0].data),
+//         }
+
+// }
 
 app.use("/", router);
 
