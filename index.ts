@@ -33,7 +33,7 @@ app.post("/payments", async (req: Request, res: Response) => {
       .json({ error: "Invalid amount. It must be an integer." });
   }
   await db.transaction(async (tx) => {
-    const newOrder = await db
+    const newOrder = await tx
       .insert(paymentTable)
       .values({ carId: carId, amount: amount })
       .returning();
@@ -42,7 +42,7 @@ app.post("/payments", async (req: Request, res: Response) => {
       throw new Error("no order error");
     }
 
-    const newOutbox = await db
+    const newOutbox = await tx
       .insert(outboxTable)
       .values({ data: JSON.stringify(newOrder) })
       .returning();
@@ -53,7 +53,7 @@ app.post("/payments", async (req: Request, res: Response) => {
     if (!newOrder[0]) {
       throw new Error("no order error");
     }
-    const response = await fetch(
+    try{ const response = await fetch(
       "https://warehouseapp-ynorbbawua-uc.a.run.app/car",
       {
         method: "POST",
@@ -73,6 +73,9 @@ app.post("/payments", async (req: Request, res: Response) => {
       await db.delete(outboxTable).where(eq(outboxTable.id, newOutbox[0].id));
       logger.info("Success:", response);
       res.status(200).send("Success");
+    }
+    catch{
+      throw new Error("fetch failed")
     }
   });
 });
