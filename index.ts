@@ -32,32 +32,29 @@ app.post("/payments", async (req: Request, res: Response) => {
       .status(400)
       .json({ error: "Invalid amount. It must be an integer." });
   }
-  const newIds = await db.transaction(async (tx) => {
-    const newOrder = await tx
-      .insert(paymentTable)
-      .values({ carId: carId, amount: amount })
-      .returning();
-    logger.info({ message: "New order", newOrder });
-    if (!newOrder) {
-      throw new Error("no order error");
-    }
+  const newOrder = await db
+    .insert(paymentTable)
+    .values({ carId: carId, amount: amount })
+    .returning();
+  logger.info({ message: "New order", newOrder });
+  if (!newOrder) {
+    throw new Error("no order error");
+  }
 
-    const newOutbox = await tx
-      .insert(outboxTable)
-      .values({ data: JSON.stringify(newOrder) })
-      .returning();
-    logger.info({ message: "New outbox", newOutbox });
-    if (!newOutbox[0]) {
-      throw new Error("no outbox error");
-    }
-    if (!newOrder[0]) {
-      throw new Error("no order error");
-    }
+  const newOutbox = await db
+    .insert(outboxTable)
+    .values({ data: JSON.stringify(newOrder) })
+    .returning();
+  logger.info({ message: "New outbox", newOutbox });
+  if (!newOutbox[0]) {
+    throw new Error("no outbox error");
+  }
+  if (!newOrder[0]) {
+    throw new Error("no order error");
+  }
 
-    const newCarId = newOrder[0].carId;
-    const newId = newOutbox[0].id;
-    return { newCarId, newId };
-  });
+  const newCarId = newOrder[0].carId;
+  const newId = newOutbox[0].id;
 
   try {
     const response = await fetch(
@@ -67,7 +64,7 @@ app.post("/payments", async (req: Request, res: Response) => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: newIds.newCarId,
+        body: newCarId,
       },
     );
 
@@ -77,7 +74,7 @@ app.post("/payments", async (req: Request, res: Response) => {
     }
 
     if (response.status === 200) {
-      await db.delete(outboxTable).where(eq(outboxTable.id, newIds.newId));
+      await db.delete(outboxTable).where(eq(outboxTable.id, newId));
       logger.info("Success:", response);
       res.status(200).send("Success");
     }
