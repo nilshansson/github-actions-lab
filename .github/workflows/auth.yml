@@ -3,15 +3,6 @@ on: [push, pull_request]
 jobs:
   build:
     runs-on: ubuntu-latest
-    services:
-      meilisearch:
-        image: getmeili/meilisearch:latest
-        options: >-
-          --health-cmd="curl --silent --fail http://localhost:7700/health"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
-          -p 7700:7700
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -35,14 +26,9 @@ jobs:
       - name: "Run paymentapp"
         run: "gcloud run deploy paymenteapp --source . --allow-unauthenticated"
 
-      - name: "Stop any running Meilisearch container"
+      - name: "Start Meilisearch with API Key on port 7701"
         run: |
-          docker ps -q --filter "name=meilisearch" | grep -q . && docker stop meilisearch || echo "No running container named meilisearch"
-          docker ps -aq --filter "name=meilisearch" | grep -q . && docker rm meilisearch || echo "No stopped container named meilisearch"
-
-      - name: "Start Meilisearch with API Key"
-        run: |
-          docker run -d --name meilisearch -e MEILI_MASTER_KEY=${{ secrets.MEILISEARCH_API_KEY }} -p 7700:7700 getmeili/meilisearch:latest
+          docker run -d --name meilisearch -e MEILI_MASTER_KEY=${{ secrets.MEILISEARCH_API_KEY }} -p 7701:7700 getmeili/meilisearch:latest
 
       - name: "Start Meilisync"
         run: |
@@ -56,5 +42,5 @@ jobs:
 
       - name: "Test Meilisearch Connection"
         run: |
-          curl http://localhost:7700/health
-          curl -X GET 'http://localhost:7700/indexes' -H 'Authorization: Bearer ${{ secrets.MEILISEARCH_API_KEY }}'
+          curl http://localhost:7701/health
+          curl -X GET 'http://localhost:7701/indexes' -H 'Authorization: Bearer ${{ secrets.MEILISEARCH_API_KEY }}'
