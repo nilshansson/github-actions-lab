@@ -1,0 +1,20 @@
+meilisearch:
+  api_url: http://host.docker.internal:7700/ # Connection to Meilisearch
+  api_key: "${{ secrets.MEILISEARCH_API_KEY }}"
+  insert_size: 1000
+  insert_interval: 10
+source:
+  type: postgres
+  host: 127.0.0.1
+  port: 5432
+  database: "${{ secrets.POSTGRESQL_DATABASE_NAME }}"
+  user: "${{ secrets.POSTGRESQL_USERNAME }}"
+  password: "${{ secrets.POSTGRESQL_PASSWORD }}"
+sync:
+  - table: POSTGRES_TABLE_NAME_1
+    index: MEILISEARCH_INDEX_NAME_1
+    pk: id
+    full: true
+  - table: POSTGRES_TABLE_NAME_2
+    index: MEILISEARCH_INDEX_NAME_2
+    full: true
