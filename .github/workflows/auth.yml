@@ -35,6 +35,11 @@ jobs:
       - name: "Run paymentapp"
         run: "gcloud run deploy paymenteapp --source . --allow-unauthenticated"
 
+      - name: "Stop any running Meilisearch container"
+        run: |
+          docker ps -q --filter "name=meilisearch" | grep -q . && docker stop meilisearch || echo "No running container named meilisearch"
+          docker ps -aq --filter "name=meilisearch" | grep -q . && docker rm meilisearch || echo "No stopped container named meilisearch"
+
       - name: "Start Meilisearch with API Key"
         run: |
           docker run -d --name meilisearch -e MEILI_MASTER_KEY=${{ secrets.MEILISEARCH_API_KEY }} -p 7700:7700 getmeili/meilisearch:latest
