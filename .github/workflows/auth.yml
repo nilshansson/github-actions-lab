@@ -11,7 +11,6 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=3
-          -e MEILI_MASTER_KEY=${{ secrets.MEILISEARCH_API_KEY }}
           -p 7700:7700
       meilisync:
         image: long2ice/meilisync:latest
@@ -30,10 +29,16 @@ jobs:
         run: "gcloud config set run/region us-central1"
       - name: "Run paymentapp"
         run: "gcloud run deploy paymenteapp --source . --allow-unauthenticated"
+      - name: "Start Meilisearch with API Key"
+        run: |
+          docker run -d --name meilisearch -e MEILI_MASTER_KEY=${{ secrets.MEILISEARCH_API_KEY }} -p 7700:7700 getmeili/meilisearch:latest
+      - name: "Start Meilisync"
+        run: |
+          docker run -d --name meilisync --mount type=bind,source=${{ github.workspace }}/config.yml,target=/meilisync/config.yml long2ice/meilisync:latest
       - name: "Check Meilisync Logs"
-        run: "docker logs ${{ job.services.meilisync.id }}"
+        run: "docker logs meilisync"
       - name: "Check Meilisearch Logs"
-        run: "docker logs ${{ job.services.meilisearch.id }}"
+        run: "docker logs meilisearch"
       - name: "Test Meilisearch Connection"
         run: |
           curl http://localhost:7700/health
