@@ -71,14 +71,14 @@ app.post("/orders", async (req: Request, res: Response) => {
       await tx.transaction(async (tx2) => {
         try {
           const response = await fetch(
-            "https://warehouseapp-ynorbbawua-uc.a.run.app/car",
+            "https://warehouse-app-ynorbbawua-uc.a.run.app/car",
             {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({ carId }),
-            }
+            },
           );
 
           logger.info({
