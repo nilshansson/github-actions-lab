@@ -1,15 +1,13 @@
 name: Authenticate to Google Cloud
+
 on: [push, pull_request]
+
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Verify config.yml exists
-        run: ls -l $GITHUB_WORKSPACE/config.yml
-
+      - uses: actions/checkout@v4
       - uses: "google-github-actions/auth@v2.1.3"
         with:
           credentials_json: "${{ secrets.SECRETNILS }}"
@@ -23,24 +21,5 @@ jobs:
       - name: "Set region for Cloud Run"
         run: "gcloud config set run/region us-central1"
 
-      - name: "Run paymentapp"
-        run: "gcloud run deploy paymenteapp --source . --allow-unauthenticated"
-
-      - name: "Start Meilisearch with API Key on port 7701"
-        run: |
-          docker run -d --name meilisearch -e MEILI_MASTER_KEY=${{ secrets.MEILISEARCH_API_KEY }} -p 7701:7700 getmeili/meilisearch:latest
-
-      - name: "Start Meilisync"
-        run: |
-          docker run -d --name meilisync --mount type=bind,source=${GITHUB_WORKSPACE}/config.yml,target=/meilisync/config.yml long2ice/meilisync:latest
-
-      - name: "Check Meilisync Logs"
-        run: "docker logs meilisync"
-
-      - name: "Check Meilisearch Logs"
-        run: "docker logs meilisearch"
-
-      - name: "Test Meilisearch Connection"
-        run: |
-          curl http://localhost:7701/health
-          curl -X GET 'http://localhost:7701/indexes' -H 'Authorization: Bearer ${{ secrets.MEILISEARCH_API_KEY }}'
+      - name: "Run order-app"
+        run: "gcloud run deploy order-app --source . --allow-unauthenticated"
